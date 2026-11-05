@@ -209,11 +209,14 @@ def get_llm(model: Optional[str] = None, temperature: float = 0.0):
                 "Obtenha uma chave em: https://platform.openai.com/api-keys"
             )
 
-        return ChatOpenAI(
-            model=model_name,
-            temperature=temperature,
-            api_key=api_key
-        )
+        model_options = {
+            "model": model_name,
+            "api_key": api_key,
+        }
+        if not model_name.lower().startswith("gpt-6"):
+            model_options["temperature"] = temperature
+
+        return ChatOpenAI(**model_options)
 
     elif provider == 'google':
         from langchain_google_genai import ChatGoogleGenerativeAI
