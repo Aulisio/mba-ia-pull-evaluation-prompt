@@ -116,6 +116,18 @@ que você coloca no `.env`.
 
 ## Requisitos
 
+### Técnicas Aplicadas (Fase 2)
+
+`bug_to_user_story_v2` combina técnicas do Capítulo 1:
+
+- **Role Prompting:** define uma pessoa de Product Manager sênior com foco em requisitos, QA e segurança.
+- **Few-shot Learning:** usa exemplos simples, de performance e de autorização, demonstrando preservação de fatos e cobertura de cenários positivos e negativos.
+- **Skeleton of Thought:** organiza histórias simples e problemas múltiplos em formatos com critérios agrupados e testáveis.
+- **Least-to-Most Prompting:** decompõe relatos complexos em problemas independentes e converte cada problema em critérios antes de redigir a história.
+- **Chain of Thought:** orienta uma checagem interna de ator, comportamento atual, resultado esperado e cobertura, sem expor o raciocínio na resposta.
+
+Na primeira avaliação da v2, F1-Score foi 0,716 e Correctness 0,771. Os exemplos de menor F1 mostraram omissões de requisitos em relatos complexos; por isso, a v2 não limita a quantidade de critérios e exige cobertura de cada problema explícito. Ela também remove perguntas de esclarecimento que desviavam a resposta do artefato pedido. Na última execução, os resultados agregados melhoraram e estão registrados na seção [Resultados da última execução](#resultados-da-última-execução).
+
 ### 1. Pull do Prompt inicial do LangSmith
 
 O repositório base já contém prompts de baixa qualidade publicados no LangSmith Prompt Hub. Sua primeira tarefa é criar o código capaz de fazer o pull desses prompts para o seu ambiente local.
@@ -341,7 +353,64 @@ from langsmith import Client
 print(Client().share_dataset(dataset_name="<seu LANGSMITH_PROJECT>-eval")["url"])
 ```
 
-Rode uma vez e guarde o endereço: ao compartilhar de novo, o link muda.
+Link público do dataset compartilhado: https://smith.langchain.com/public/fa70d74f-97cd-4bbd-a70d-f10912695b4d/d
+
+Guarde esse endereço: ao compartilhar de novo, o link muda.
+
+## Resultados da última execução
+
+Execução do prompt otimizado `bug_to_user_story_v2` no LangSmith, com **15 de 15
+exemplos executados**. As médias exibidas no dashboard foram:
+
+| Métrica | Média |
+|---|---:|
+| Clarity | 0,88 |
+| Correctness | 0,84 |
+| F1-Score | 0,81 |
+| Helpfulness | 0,88 |
+| Precision | 0,87 |
+
+As cinco médias atingem o mínimo de 0,8 definido no critério de aprovação. Os
+valores são médias do experimento; alguns exemplos individuais ficaram abaixo de
+0,8, então a tabela não significa que cada uma das 15 respostas passou
+individualmente em todas as métricas.
+
+**Comparação e evidência no LangSmith:** [abrir o experimento da última execução](https://smith.langchain.com/o/c663f80d-708a-4680-a88d-58b66a85cc9f/datasets/40b96adb-4096-4948-b53f-721c7d8aa421/compare?selectedSessions=5d042a35-1a5d-46d8-b4e5-3892db8e6efc).
+O link do experimento pode exigir login e acesso ao workspace. Para consulta
+pública, use o [dataset compartilhado](https://smith.langchain.com/public/fa70d74f-97cd-4bbd-a70d-f10912695b4d/d).
+
+### Screenshots
+
+Última execução (aprovada, médias ≥ 0,8 em todas as métricas):
+
+![Avaliação v2 aprovada](docs/avaliacao-v2-aprovada.png)
+
+Primeira iteração da v2 (reprovada: Correctness 0,77 e F1 0,72), usada como
+ponto de partida para a revisão do prompt:
+
+![Primeira iteração da v2](docs/avaliacao-v2-primeira-iteracao.png)
+
+### Tracing detalhado (execução aprovada)
+
+Traces da execução aprovada, com as cinco notas gravadas como feedback e a cadeia `ChatPromptTemplate` → `ChatOpenAI`.
+
+- Exemplo 2 (app offline-first): Correctness 0,8095 e F1 0,749 (antes: 0,7007 e 0,5714). ![Trace aprovado - exemplo 2](docs/trace-v2-aprovada-exemplo2.png)
+- Exemplo 3 (relatórios gerenciais): Correctness 0,8623 e F1 0,8647 (antes: 0,7071 e 0,5843). ![Trace aprovado - exemplo 3](docs/trace-v2-aprovada-exemplo3.png)
+- Exemplo 13 (checkout com múltiplas falhas): Correctness 0,8615 e F1 0,8029. ![Trace aprovado - exemplo 13](docs/trace-v2-aprovada-exemplo13.png)
+
+### Tracing detalhado (primeira iteração)
+
+Traces da primeira iteração, usados para diagnosticar as omissões que motivaram a revisão do prompt. Cada trace mostra `ChatPromptTemplate` e `ChatOpenAI`, a latência e as cinco notas gravadas como feedback.
+
+- Exemplo 2 (app offline-first), nota de F1 com justificativa de recall parcial: ![Trace exemplo 2 - F1](docs/trace-iteracao1-exemplo2-f1.png)
+- Exemplo 2, nota de Correctness: ![Trace exemplo 2 - Correctness](docs/trace-iteracao1-exemplo2-correctness.png)
+- Exemplo 3 (relatórios gerenciais): ![Trace exemplo 3](docs/trace-iteracao1-exemplo3.png)
+
+Em relação à primeira avaliação, F1-Score passou de 0,716 para uma média de 0,81,
+e Correctness de 0,771 para 0,84. A v2 reforça a decomposição de relatos
+complexos, a cobertura de cada requisito e a preservação de métricas, limites e
+sugestões técnicas, além de incluir exemplos few-shot e um formato de saída
+estruturado.
 
 ## Dicas Finais
 
